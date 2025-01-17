@@ -138,6 +138,13 @@ export default function HomePage() {
     }
   };
 
+  const deleteChat = (chatId: string) => {
+    setChats(prev => prev.filter(chat => chat.id !== chatId));
+    if (currentChatId === chatId) {
+      setCurrentChatId(null);
+    }
+  };
+
   return (
     <div className="flex h-screen relative bg-black">
       <StarfieldCanvas />
@@ -147,14 +154,22 @@ export default function HomePage() {
           currentChatId={currentChatId}
           onSelectChat={setCurrentChatId}
           onNewChat={createNewChat}
+          onDeleteChat={deleteChat}
         />
         
         <div className="flex-1 flex flex-col bg-black/50 backdrop-blur-sm">
           {!currentChatId ? (
-            <div className="flex items-center justify-center h-full">
-              <Button color="primary" onPress={createNewChat}>
-                开始新对话
-              </Button>
+            <div className="flex flex-col items-center justify-center h-full p-4">
+              <div className="max-w-lg text-center space-y-4 text-white">
+                <h1 className="text-2xl font-bold">欢迎使用 AI 助手</h1>
+                <p className="text-gray-300">
+                  这是一个基于人工智能的对话助手，可以帮助你解答问题、进行创作、编程等。
+                  点击左侧的&ldquo;新对话&rdquo;按钮开始交谈吧！
+                </p>
+                <Button color="primary" onPress={createNewChat}>
+                  开始新对话
+                </Button>
+              </div>
             </div>
           ) : (
             <>
