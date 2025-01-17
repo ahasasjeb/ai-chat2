@@ -147,9 +147,9 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex h-screen relative bg-black">
+    <div className="flex h-[100dvh] relative bg-black">
       <StarfieldCanvas />
-      <div className="flex h-screen w-full absolute" style={{ zIndex: 1 }}>
+      <div className="flex h-full w-full absolute" style={{ zIndex: 1 }}>
         {/* 侧边栏容器 */}
         <div className="relative" style={{ zIndex: 50 }}>
           {/* 移动端菜单按钮移到这里 */}
@@ -212,7 +212,7 @@ export default function HomePage() {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto p-2 md:p-4">
+              <div className="flex-1 overflow-y-auto p-2 md:p-4 pb-safe">
                 <div className="max-w-3xl mx-auto space-y-4">
                   {messages.map(m => (
                     <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -276,9 +276,13 @@ export default function HomePage() {
                 </div>
               </div>
               
-              <div className="border-t border-gray-800 bg-black/70 p-2 md:p-4" style={{ 
-                paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)",
-              }}>
+              <div 
+                className="border-t border-gray-800 bg-black/70 p-2 md:p-4 pb-safe" 
+                style={{ 
+                  paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
+                  marginBottom: "env(safe-area-inset-bottom)"
+                }}
+              >
                 <div className="max-w-3xl mx-auto">
                   <form onSubmit={handleSubmit} className="flex gap-2">
                     <Input
