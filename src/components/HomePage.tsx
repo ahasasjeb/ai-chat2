@@ -163,7 +163,8 @@ export default function HomePage() {
               <div className="max-w-lg text-center space-y-4 text-white">
                 <h1 className="text-2xl font-bold">欢迎使用 AI 助手</h1>
                 <p className="text-gray-300">
-                  这是一个基于人工智能的对话助手，可以帮助你解答问题、进行创作、编程等。
+                  这是一个基于GPT 4o mini的对话助手，可以帮助你解答问题、进行创作、编程等。
+                  隐私声明：我们不会保存任何对话内容，所有对话内容都只保存在你的浏览器中。
                   点击左侧的&ldquo;新对话&rdquo;按钮开始交谈吧！
                 </p>
                 <Button color="primary" onPress={createNewChat}>
