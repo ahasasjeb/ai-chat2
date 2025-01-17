@@ -158,7 +158,7 @@ export default function HomePage() {
         />
         
         <div className="flex-1 flex flex-col bg-black/50 backdrop-blur-sm">
-          {!currentChatId ? (
+          {!currentChatId || chats.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-4">
               <div className="max-w-lg text-center space-y-4 text-white">
                 <h1 className="text-2xl font-bold">欢迎使用 AI 助手</h1>

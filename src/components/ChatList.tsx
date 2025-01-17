@@ -13,21 +13,20 @@ export default function ChatList({ chats, currentChatId, onSelectChat, onNewChat
   const sortedChats = [...chats].sort((a, b) => b.createdAt - a.createdAt);
 
   return (
-    <div className="w-64 h-screen bg-gray-100 p-4 flex flex-col gap-2">
+    <div className="w-64 bg-gray-900 p-4 flex flex-col gap-2">
       <Button 
         color="primary" 
-        className="mb-4"
         onPress={onNewChat}
       >
-        新建对话
+        新对话
       </Button>
       
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto space-y-2">
         {sortedChats.map((chat) => (
           <div 
             key={chat.id}
-            className={`flex items-center gap-2 p-2 rounded cursor-pointer ${
-              chat.id === currentChatId ? 'bg-blue-600' : 'hover:bg-gray-800'
+            className={`group flex items-center gap-2 p-2 rounded cursor-pointer ${
+              chat.id === currentChatId ? 'bg-blue-600 text-white' : 'hover:bg-gray-800 text-gray-300'
             }`}
           >
             <div 
@@ -39,7 +38,7 @@ export default function ChatList({ chats, currentChatId, onSelectChat, onNewChat
             <Button 
               size="sm" 
               color="danger" 
-              variant="light" 
+              variant="flat"
               onPress={() => onDeleteChat(chat.id)}
               className="opacity-0 group-hover:opacity-100"
             >
