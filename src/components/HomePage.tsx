@@ -17,6 +17,7 @@ export default function HomePage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentAssistantMessage, setCurrentAssistantMessage] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -149,15 +150,52 @@ export default function HomePage() {
     <div className="flex h-screen relative bg-black">
       <StarfieldCanvas />
       <div className="flex h-screen w-full absolute" style={{ zIndex: 1 }}>
-        <ChatList 
-          chats={chats}
-          currentChatId={currentChatId}
-          onSelectChat={setCurrentChatId}
-          onNewChat={createNewChat}
-          onDeleteChat={deleteChat}
-        />
-        
-        <div className="flex-1 flex flex-col bg-black/50 backdrop-blur-sm">
+        {/* 侧边栏容器 */}
+        <div className="relative" style={{ zIndex: 50 }}>
+          {/* 移动端菜单按钮移到这里 */}
+          <Button
+            className="md:hidden fixed top-4 left-4 z-10 bg-blue-600 hover:bg-blue-500 text-white"
+            isIconOnly
+            variant="solid"
+            onPress={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            {isSidebarOpen ? '✕' : '☰'}
+          </Button>
+
+          {/* 侧边栏 */}
+          <aside 
+            className={`
+              fixed md:relative w-64 h-full transition-transform duration-300 ease-in-out
+              bg-gray-900 border-r border-gray-800
+              ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}
+          >
+            <div className="h-full w-full overflow-y-auto pt-16 md:pt-0">
+              <ChatList 
+                chats={chats}
+                currentChatId={currentChatId}
+                onSelectChat={(id) => {
+                  setCurrentChatId(id);
+                  setIsSidebarOpen(false);
+                }}
+                onNewChat={createNewChat}
+                onDeleteChat={deleteChat}
+              />
+            </div>
+          </aside>
+
+          {/* 移动端遮罩层也移到这里 */}
+          {isSidebarOpen && (
+            <div 
+              className="md:hidden fixed inset-0 bg-black/60"
+              style={{ zIndex: -1 }}
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+        </div>
+
+        {/* 主内容区域 */}
+        <main className="flex-1 flex flex-col bg-black/50">
           {!currentChatId || chats.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-4">
               <div className="max-w-lg text-center space-y-4 text-white">
@@ -174,12 +212,12 @@ export default function HomePage() {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-2 md:p-4">
                 <div className="max-w-3xl mx-auto space-y-4">
                   {messages.map(m => (
                     <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div 
-                        className={`rounded-2xl px-4 py-2 max-w-[80%] ${
+                        className={`rounded-2xl px-3 py-2 md:px-4 md:py-2 max-w-[90%] md:max-w-[80%] ${
                           m.role === 'user' 
                             ? 'bg-blue-500 text-white' 
                             : 'bg-green-500 text-white prose prose-invert max-w-none'
@@ -238,14 +276,14 @@ export default function HomePage() {
                 </div>
               </div>
               
-              <div className="border-t border-gray-800 bg-black/70 p-4">
+              <div className="border-t border-gray-800 bg-black/70 p-2 md:p-4">
                 <div className="max-w-3xl mx-auto">
                   <form onSubmit={handleSubmit} className="flex gap-2">
                     <Input
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="输入消息..."
-                      className="flex-1"
+                      className="flex-1 text-sm md:text-base"
                       classNames={{
                         input: "bg-gray-900 text-white",
                         inputWrapper: "bg-gray-900 hover:bg-gray-800"
@@ -258,6 +296,7 @@ export default function HomePage() {
                       color="primary"
                       isLoading={isLoading}
                       size="lg"
+                      className="min-w-[60px] md:min-w-[80px]"
                     >
                       发送
                     </Button>
@@ -266,7 +305,7 @@ export default function HomePage() {
               </div>
             </>
           )}
-        </div>
+        </main>
       </div>
     </div>
   );
