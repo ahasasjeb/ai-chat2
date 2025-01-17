@@ -276,7 +276,9 @@ export default function HomePage() {
                 </div>
               </div>
               
-              <div className="border-t border-gray-800 bg-black/70 p-2 md:p-4">
+              <div className="border-t border-gray-800 bg-black/70 p-2 md:p-4" style={{ 
+                paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)",
+              }}>
                 <div className="max-w-3xl mx-auto">
                   <form onSubmit={handleSubmit} className="flex gap-2">
                     <Input

@@ -27,10 +27,10 @@ export function StarfieldCanvas() {
     };
 
     const createMeteor = (): Meteor => ({
-      x: Math.random() * canvas.width,
-      y: 0,
+      x: Math.random() * canvas.width * 0.3 - canvas.width * 0.3, // 从屏幕左侧开始
+      y: Math.random() * canvas.height * 0.3, // 从靠近顶部开始
       length: Math.random() * 80 + 20,
-      speed: Math.random() * 10 + 5,
+      speed: Math.random() * 5 + 2,
       size: Math.random() * 2 + 0.5
     });
 
@@ -49,10 +49,12 @@ export function StarfieldCanvas() {
         ctx.lineWidth = meteor.size;
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.moveTo(meteor.x, meteor.y);
-        ctx.lineTo(meteor.x + meteor.length, meteor.y + meteor.length);
+        // 修改流星的角度，使其更倾斜
+        ctx.lineTo(meteor.x + meteor.length * 1.5, meteor.y + meteor.length);
         ctx.stroke();
 
-        meteor.x += meteor.speed;
+        // 调整运动方向，使其向右下方运动
+        meteor.x += meteor.speed * 1.5;
         meteor.y += meteor.speed;
 
         if (meteor.x > canvas.width || meteor.y > canvas.height) {
