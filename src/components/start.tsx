@@ -30,7 +30,7 @@ export function StarfieldCanvas() {
       x: Math.random() * canvas.width,
       y: 0,
       length: Math.random() * 80 + 20,
-      speed: Math.random() * 2 + 5,
+      speed: Math.random() * 10 + 5,
       size: Math.random() * 2 + 0.5
     });
 
