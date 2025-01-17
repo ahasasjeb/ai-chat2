@@ -8,6 +8,7 @@ import rehypeRaw from 'rehype-raw';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import type { ChatMessage, Chat } from '@/types/ai';
 import ChatList from './ChatList';
+import { StarfieldCanvas } from './start';
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
@@ -138,37 +139,62 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex h-screen">
-      <ChatList 
-        chats={chats}
-        currentChatId={currentChatId}
-        onSelectChat={setCurrentChatId}
-        onNewChat={createNewChat}
-      />
-      
-      <div className="flex-1 flex flex-col bg-gray-50">
-        {!currentChatId ? (
-          <div className="flex items-center justify-center h-full">
-            <Button color="primary" onPress={createNewChat}>
-              开始新对话
-            </Button>
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="max-w-3xl mx-auto space-y-4">
-                {messages.map(m => (
-                  <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div 
-                      className={`rounded-2xl px-4 py-2 max-w-[80%] ${
-                        m.role === 'user' 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-green-500 text-white prose prose-invert max-w-none'
-                      }`}
-                    >
-                      {m.role === 'user' ? (
-                        <div className="whitespace-pre-wrap">{m.content}</div>
-                      ) : (
+    <div className="flex h-screen relative bg-black">
+      <StarfieldCanvas />
+      <div className="flex h-screen w-full absolute" style={{ zIndex: 1 }}>
+        <ChatList 
+          chats={chats}
+          currentChatId={currentChatId}
+          onSelectChat={setCurrentChatId}
+          onNewChat={createNewChat}
+        />
+        
+        <div className="flex-1 flex flex-col bg-black/50 backdrop-blur-sm">
+          {!currentChatId ? (
+            <div className="flex items-center justify-center h-full">
+              <Button color="primary" onPress={createNewChat}>
+                开始新对话
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="max-w-3xl mx-auto space-y-4">
+                  {messages.map(m => (
+                    <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div 
+                        className={`rounded-2xl px-4 py-2 max-w-[80%] ${
+                          m.role === 'user' 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-green-500 text-white prose prose-invert max-w-none'
+                        }`}
+                      >
+                        {m.role === 'user' ? (
+                          <div className="whitespace-pre-wrap">{m.content}</div>
+                        ) : (
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[rehypeRaw]}
+                            components={{
+                              pre: ({ ...props }) => (
+                                <pre className="bg-black/20 rounded-lg p-2 overflow-auto" {...props} />
+                              ),
+                              code: ({ className, children, ...props }) => (
+                                <code className={`${className || ''} font-mono text-sm`} {...props}>
+                                  {children}
+                                </code>
+                              ),
+                            }}
+                          >
+                            {m.content}
+                          </ReactMarkdown>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {currentAssistantMessage && (
+                    <div className="flex justify-start">
+                      <div className="rounded-2xl px-4 py-2 max-w-[80%] bg-green-500 text-white prose prose-invert max-w-none">
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm]}
                           rehypePlugins={[rehypeRaw]}
@@ -183,66 +209,48 @@ export default function HomePage() {
                             ),
                           }}
                         >
-                          {m.content}
+                          {currentAssistantMessage}
                         </ReactMarkdown>
-                      )}
+                        <Spinner size="sm" classNames={{
+                          base: "w-4 h-4 mt-2",
+                          circle1: "border-b-white",
+                          circle2: "border-b-transparent"
+                        }} />
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {currentAssistantMessage && (
-                  <div className="flex justify-start">
-                    <div className="rounded-2xl px-4 py-2 max-w-[80%] bg-green-500 text-white prose prose-invert max-w-none">
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeRaw]}
-                        components={{
-                          pre: ({ ...props }) => (
-                            <pre className="bg-black/20 rounded-lg p-2 overflow-auto" {...props} />
-                          ),
-                          code: ({ className, children, ...props }) => (
-                            <code className={`${className || ''} font-mono text-sm`} {...props}>
-                              {children}
-                            </code>
-                          ),
-                        }}
-                      >
-                        {currentAssistantMessage}
-                      </ReactMarkdown>
-                      <Spinner size="sm" classNames={{
-                        base: "w-4 h-4 mt-2",
-                        circle1: "border-b-white",
-                        circle2: "border-b-transparent"
-                      }} />
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-            
-            <div className="border-t bg-white p-4">
-              <div className="max-w-3xl mx-auto">
-                <form onSubmit={handleSubmit} className="flex gap-2">
-                  <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="输入消息..."
-                    className="flex-1"
-                    disabled={isLoading}
-                    size="lg"
-                  />
-                  <Button 
-                    type="submit" 
-                    color="primary"
-                    isLoading={isLoading}
-                    size="lg"
-                  >
-                    发送
-                  </Button>
-                </form>
+              
+              <div className="border-t border-gray-800 bg-black/70 p-4">
+                <div className="max-w-3xl mx-auto">
+                  <form onSubmit={handleSubmit} className="flex gap-2">
+                    <Input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="输入消息..."
+                      className="flex-1"
+                      classNames={{
+                        input: "bg-gray-900 text-white",
+                        inputWrapper: "bg-gray-900 hover:bg-gray-800"
+                      }}
+                      disabled={isLoading}
+                      size="lg"
+                    />
+                    <Button 
+                      type="submit" 
+                      color="primary"
+                      isLoading={isLoading}
+                      size="lg"
+                    >
+                      发送
+                    </Button>
+                  </form>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
