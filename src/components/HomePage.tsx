@@ -66,14 +66,6 @@ export default function HomePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 添加防抖，避免键盘收起时的误触
-    const target = e.target as HTMLFormElement;
-    const submitButton = target.querySelector('button[type="submit"]');
-    if (submitButton && !(submitButton as HTMLElement).contains(e.target as Node)) {
-      return;
-    }
-
     if (!input.trim() || !currentChatId) return;
 
     const userMessage: ChatMessage = {
@@ -310,10 +302,7 @@ export default function HomePage() {
                       color="primary"
                       isLoading={isLoading}
                       size="lg"
-                      className="min-w-[60px] md:min-w-[80px] h-[50px]" // 增加按钮高度
-                      style={{
-                        touchAction: 'manipulation', // 优化触摸操作
-                      }}
+                      className="min-w-[60px] md:min-w-[80px]"
                     >
                       发送
                     </Button>
