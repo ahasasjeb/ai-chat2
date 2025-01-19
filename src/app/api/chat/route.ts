@@ -10,7 +10,6 @@ export async function POST(req: Request) {
     model: model,
     messages,
     temperature: 0.7,
-    max_tokens: 1000,
     stream: true,
   });
 
@@ -51,7 +50,6 @@ export async function GET(req: Request) {
     model,
     messages,
     temperature: 0.7,
-    max_tokens: 1000,
     stream: true,
   });
 

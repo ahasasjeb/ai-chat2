@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       },
       ...messages
     ],
-    temperature: 0.7,
+    temperature: 0.1,
     max_tokens: 50,
     stream: true,  // 启用流式输出
   });
