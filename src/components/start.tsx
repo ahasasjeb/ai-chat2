@@ -27,8 +27,8 @@ export function StarfieldCanvas() {
     };
 
     const createMeteor = (): Meteor => ({
-      x: Math.random() * canvas.width * 0.3 - canvas.width * 0.3, // 从屏幕左侧开始
-      y: Math.random() * canvas.height * 0.3, // 从靠近顶部开始
+      x: Math.random() * canvas.width - canvas.width, // 修改初始位置范围
+      y: Math.random() * canvas.height - canvas.height * 0.5, // 修改初始位置范围
       length: Math.random() * 80 + 20,
       speed: Math.random() * 5 + 2,
       size: Math.random() * 2 + 0.5
@@ -82,7 +82,7 @@ export function StarfieldCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full pointer-events-none bg-black"
+      className="fixed top-0 left-0 w-screen h-screen pointer-events-none bg-black"
       style={{ zIndex: 0 }}
     />
   );

@@ -166,11 +166,11 @@ export default function HomePage() {
           <aside 
             className={`
               fixed md:relative w-64 h-full transition-transform duration-300 ease-in-out
-              bg-gray-900 border-r border-gray-800
+              bg-gray-900 border-r border-gray-800 flex flex-col
               ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}
           >
-            <div className="h-full w-full overflow-y-auto pt-16 md:pt-0">
+            <div className="flex-1 overflow-y-auto pt-16 md:pt-0 pb-safe scrollbar-none">
               <ChatList 
                 chats={chats}
                 currentChatId={currentChatId}

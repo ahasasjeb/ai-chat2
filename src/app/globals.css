@@ -59,3 +59,12 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+/* 隐藏滚动条但保持功能 */
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
