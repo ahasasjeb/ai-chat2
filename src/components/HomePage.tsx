@@ -258,7 +258,7 @@ export default function HomePage() {
             <>
               {/* 添加模型选择器 */}
               <div className="border-b border-gray-800 p-2">
-                <div className="max-w-3xl mx-auto">
+                <div className="max-w-3xl mx-auto flex justify-end">
                   <ModelSelector
                     value={currentModel}
                     onChange={setCurrentModel}
@@ -273,29 +273,28 @@ export default function HomePage() {
                       <div 
                         className={`rounded-2xl px-3 py-2 md:px-4 md:py-2 max-w-[90%] md:max-w-[80%] ${
                           m.role === 'user' 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-green-500 text-white prose prose-invert max-w-none'
+                            ? 'bg-blue-500 text-white break-words' 
+                            : 'bg-green-500 text-white prose prose-invert max-w-none break-words'
                         }`}
                       >
                         {m.role === 'user' ? (
-                          <div className="whitespace-pre-wrap">{m.content}</div>
+                          <div className="whitespace-pre-wrap break-all">{m.content}</div>
                         ) : (
                           <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
                             rehypePlugins={[rehypeRaw]}
                             components={{
                               pre: ({ ...props }) => (
-                                <pre className="bg-black/20 rounded-lg p-2 overflow-auto" {...props} />
+                                <pre className="bg-black/20 rounded-lg p-2 overflow-x-auto max-w-[calc(90vw-3rem)] md:max-w-none" {...props} />
                               ),
                               code: ({ className, children, ...props }) => {
-                                // 判断是否为代码块（使用 ```）
                                 const isCodeBlock = className?.includes('language-');
                                 return isCodeBlock ? (
-                                  <code className={`${className || ''} font-mono text-sm`} {...props}>
+                                  <code className={`${className || ''} font-mono text-sm break-all whitespace-pre-wrap`} {...props}>
                                     {children}
                                   </code>
                                 ) : (
-                                  <Code color="primary" className="text-sm">
+                                  <Code color="primary" className="text-sm break-all">
                                     {children}
                                   </Code>
                                 );
@@ -310,23 +309,22 @@ export default function HomePage() {
                   ))}
                   {currentAssistantMessage && (
                     <div className="flex justify-start">
-                      <div className="rounded-2xl px-4 py-2 max-w-[80%] bg-green-500 text-white prose prose-invert max-w-none">
+                      <div className="rounded-2xl px-4 py-2 max-w-[90%] md:max-w-[80%] bg-green-500 text-white prose prose-invert max-w-none break-words">
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm]}
                           rehypePlugins={[rehypeRaw]}
                           components={{
                             pre: ({ ...props }) => (
-                              <pre className="bg-black/20 rounded-lg p-2 overflow-auto" {...props} />
+                              <pre className="bg-black/20 rounded-lg p-2 overflow-x-auto max-w-[calc(90vw-3rem)] md:max-w-none" {...props} />
                             ),
                             code: ({ className, children, ...props }) => {
-                              // 判断是否为代码块（使用 ```）
                               const isCodeBlock = className?.includes('language-');
                               return isCodeBlock ? (
-                                <code className={`${className || ''} font-mono text-sm`} {...props}>
+                                <code className={`${className || ''} font-mono text-sm break-all whitespace-pre-wrap`} {...props}>
                                   {children}
                                 </code>
                               ) : (
-                                <Code color="primary" className="text-sm">
+                                <Code color="primary" className="text-sm break-all">
                                   {children}
                                 </Code>
                               );
