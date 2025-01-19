@@ -42,7 +42,7 @@ export default function HomePage() {
   };
 
   const generateTitle = async (messages: ChatMessage[]) => {
-    if (messages.length < 2) return; // 至少需要一次对话才生成标题
+    if (messages.length < 2) return;
 
     try {
       const response = await fetch('/api/generate-title', {
@@ -54,13 +54,35 @@ export default function HomePage() {
         })) }),
       });
 
-      const { title } = await response.json();
-      
-      setChats(prev => prev.map(chat => 
-        chat.id === currentChatId 
-          ? { ...chat, title }
-          : chat
-      ));
+      const eventSource = new EventSource(response.url);
+      let finalTitle = '新对话';
+
+      eventSource.onmessage = (event) => {
+        if (event.data === '[DONE]') {
+          eventSource.close();
+          setChats(prev => prev.map(chat => 
+            chat.id === currentChatId 
+              ? { ...chat, title: finalTitle }
+              : chat
+          ));
+          return;
+        }
+
+        try {
+          const data = JSON.parse(event.data);
+          if (data.title) {
+            finalTitle = data.title;
+          }
+        } catch (error) {
+          console.error('Error parsing SSE data:', error);
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('SSE Error:', error);
+        eventSource.close();
+      };
+
     } catch (error) {
       console.error('Error generating title:', error);
     }
@@ -99,45 +121,57 @@ export default function HomePage() {
         }),
       });
 
-      const reader = response.body?.getReader();
+      const eventSource = new EventSource(response.url);
       let accumulatedContent = '';
 
-      while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        const text = new TextDecoder().decode(value);
-        accumulatedContent += text;
-        setCurrentAssistantMessage(accumulatedContent);
-      }
+      eventSource.onmessage = (event) => {
+        if (event.data === '[DONE]') {
+          // 收到结束标记，关闭连接
+          eventSource.close();
+          
+          const assistantMessage: ChatMessage = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: accumulatedContent
+          };
 
-      const assistantMessage: ChatMessage = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: accumulatedContent
+          setCurrentAssistantMessage('');
+          
+          setChats(prev => prev.map(chat => 
+            chat.id === currentChatId 
+              ? { ...chat, messages: [...chat.messages, assistantMessage] }
+              : chat
+          ));
+
+          // 检查是否需要生成标题
+          const updatedMessages = [...messages, userMessage, assistantMessage];
+          if (updatedMessages.length === 2) {
+            setTimeout(async () => {
+              await generateTitle(updatedMessages);
+            }, 0);
+          }
+          
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          const data = JSON.parse(event.data);
+          accumulatedContent += data.content;
+          setCurrentAssistantMessage(accumulatedContent);
+        } catch (error) {
+          console.error('Error parsing SSE data:', error);
+        }
       };
 
-      // 先清除当前助手消息
-      setCurrentAssistantMessage('');
-      
-      // 更新消息列表
-      setChats(prev => prev.map(chat => 
-        chat.id === currentChatId 
-          ? { ...chat, messages: [...chat.messages, assistantMessage] }
-          : chat
-      ));
+      eventSource.onerror = (error) => {
+        console.error('SSE Error:', error);
+        eventSource.close();
+        setIsLoading(false);
+      };
 
-      // 等待消息更新完成后再生成标题
-      const updatedMessages = [...messages, userMessage, assistantMessage];
-      if (updatedMessages.length === 2) {
-        // 使用setTimeout确保消息更新完成后再生成标题
-        setTimeout(async () => {
-          await generateTitle(updatedMessages);
-        }, 0);
-      }
     } catch (error) {
       console.error('Error:', error);
-    } finally {
       setIsLoading(false);
     }
   };

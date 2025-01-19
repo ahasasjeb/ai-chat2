@@ -17,7 +17,34 @@ export async function POST(req: Request) {
     ],
     temperature: 0.7,
     max_tokens: 50,
+    stream: true,  // 启用流式输出
   });
 
-  return Response.json({ title: response.choices[0]?.message?.content || '新对话' });
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        let accumulatedTitle = '';
+        for await (const chunk of response) {
+          const content = chunk.choices[0]?.delta?.content || '';
+          if (content) {
+            accumulatedTitle += content;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ title: accumulatedTitle })}\n\n`));
+          }
+        }
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
 }
