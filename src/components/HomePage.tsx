@@ -54,35 +54,40 @@ export default function HomePage() {
         })) }),
       });
 
-      const eventSource = new EventSource(response.url);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
       let finalTitle = '新对话';
 
-      eventSource.onmessage = (event) => {
-        if (event.data === '[DONE]') {
-          eventSource.close();
-          setChats(prev => prev.map(chat => 
-            chat.id === currentChatId 
-              ? { ...chat, title: finalTitle }
-              : chat
-          ));
-          return;
-        }
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        try {
-          const data = JSON.parse(event.data);
-          if (data.title) {
-            finalTitle = data.title;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              setChats(prev => prev.map(chat => 
+                chat.id === currentChatId 
+                  ? { ...chat, title: finalTitle }
+                  : chat
+              ));
+              return;
+            }
+
+            try {
+              const parsedData = JSON.parse(data);
+              if (parsedData.title) {
+                finalTitle = parsedData.title;
+              }
+            } catch (error) {
+              console.error('Error parsing SSE data:', error);
+            }
           }
-        } catch (error) {
-          console.error('Error parsing SSE data:', error);
         }
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('SSE Error:', error);
-        eventSource.close();
-      };
-
+      }
     } catch (error) {
       console.error('Error generating title:', error);
     }
@@ -121,54 +126,56 @@ export default function HomePage() {
         }),
       });
 
-      const eventSource = new EventSource(response.url);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
       let accumulatedContent = '';
 
-      eventSource.onmessage = (event) => {
-        if (event.data === '[DONE]') {
-          // 收到结束标记，关闭连接
-          eventSource.close();
-          
-          const assistantMessage: ChatMessage = {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: accumulatedContent
-          };
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-          setCurrentAssistantMessage('');
-          
-          setChats(prev => prev.map(chat => 
-            chat.id === currentChatId 
-              ? { ...chat, messages: [...chat.messages, assistantMessage] }
-              : chat
-          ));
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              const assistantMessage: ChatMessage = {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: accumulatedContent
+              };
 
-          // 检查是否需要生成标题
-          const updatedMessages = [...messages, userMessage, assistantMessage];
-          if (updatedMessages.length === 2) {
-            setTimeout(async () => {
-              await generateTitle(updatedMessages);
-            }, 0);
+              setCurrentAssistantMessage('');
+              
+              setChats(prev => prev.map(chat => 
+                chat.id === currentChatId 
+                  ? { ...chat, messages: [...chat.messages, assistantMessage] }
+                  : chat
+              ));
+
+              const updatedMessages = [...messages, userMessage, assistantMessage];
+              if (updatedMessages.length === 2) {
+                await generateTitle(updatedMessages);
+              }
+              
+              setIsLoading(false);
+              return;
+            }
+
+            try {
+              const parsedData = JSON.parse(data);
+              if (parsedData.content) {
+                accumulatedContent += parsedData.content;
+                setCurrentAssistantMessage(accumulatedContent);
+              }
+            } catch (error) {
+              console.error('Error parsing SSE data:', error);
+            }
           }
-          
-          setIsLoading(false);
-          return;
         }
-
-        try {
-          const data = JSON.parse(event.data);
-          accumulatedContent += data.content;
-          setCurrentAssistantMessage(accumulatedContent);
-        } catch (error) {
-          console.error('Error parsing SSE data:', error);
-        }
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('SSE Error:', error);
-        eventSource.close();
-        setIsLoading(false);
-      };
+      }
 
     } catch (error) {
       console.error('Error:', error);
