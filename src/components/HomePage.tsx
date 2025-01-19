@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Input, Button, Spinner } from "@nextui-org/react";
+import { Input, Button, Spinner, Code } from "@nextui-org/react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -233,11 +233,19 @@ export default function HomePage() {
                               pre: ({ ...props }) => (
                                 <pre className="bg-black/20 rounded-lg p-2 overflow-auto" {...props} />
                               ),
-                              code: ({ className, children, ...props }) => (
-                                <code className={`${className || ''} font-mono text-sm`} {...props}>
-                                  {children}
-                                </code>
-                              ),
+                              code: ({ className, children, ...props }) => {
+                                // 判断是否为代码块（使用 ```）
+                                const isCodeBlock = className?.includes('language-');
+                                return isCodeBlock ? (
+                                  <code className={`${className || ''} font-mono text-sm`} {...props}>
+                                    {children}
+                                  </code>
+                                ) : (
+                                  <Code color="primary" className="text-sm">
+                                    {children}
+                                  </Code>
+                                );
+                              },
                             }}
                           >
                             {m.content}
@@ -256,11 +264,19 @@ export default function HomePage() {
                             pre: ({ ...props }) => (
                               <pre className="bg-black/20 rounded-lg p-2 overflow-auto" {...props} />
                             ),
-                            code: ({ className, children, ...props }) => (
-                              <code className={`${className || ''} font-mono text-sm`} {...props}>
-                                {children}
-                              </code>
-                            ),
+                            code: ({ className, children, ...props }) => {
+                              // 判断是否为代码块（使用 ```）
+                              const isCodeBlock = className?.includes('language-');
+                              return isCodeBlock ? (
+                                <code className={`${className || ''} font-mono text-sm`} {...props}>
+                                  {children}
+                                </code>
+                              ) : (
+                                <Code color="primary" className="text-sm">
+                                  {children}
+                                </Code>
+                              );
+                            },
                           }}
                         >
                           {currentAssistantMessage}
