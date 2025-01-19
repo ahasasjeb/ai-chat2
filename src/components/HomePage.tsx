@@ -9,6 +9,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import type { ChatMessage, Chat } from '@/types/ai';
 import ChatList from './ChatList';
 import { StarfieldCanvas } from './start';
+import ModelSelector, { ModelType } from './models';
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
@@ -18,6 +19,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentAssistantMessage, setCurrentAssistantMessage] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentModel, setCurrentModel] = useLocalStorage<ModelType>('current-model', 'gpt-4o-mini');
 
   useEffect(() => {
     setMounted(true);
@@ -92,7 +94,8 @@ export default function HomePage() {
           messages: [...messages, userMessage].map(m => ({
             role: m.role,
             content: m.content
-          }))
+          })),
+          model: currentModel
         }),
       });
 
@@ -212,6 +215,16 @@ export default function HomePage() {
             </div>
           ) : (
             <>
+              {/* 添加模型选择器 */}
+              <div className="border-b border-gray-800 p-2">
+                <div className="max-w-3xl mx-auto">
+                  <ModelSelector
+                    value={currentModel}
+                    onChange={setCurrentModel}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
               <div className="flex-1 overflow-y-auto p-2 md:p-4 pb-safe">
                 <div className="max-w-3xl mx-auto space-y-4">
                   {messages.map(m => (
@@ -307,8 +320,8 @@ export default function HomePage() {
                       placeholder="输入消息..."
                       className="flex-1 text-sm md:text-base"
                       classNames={{
-                        input: "bg-gray-900 text-white",
-                        inputWrapper: "bg-gray-900 hover:bg-gray-800"
+                        input: "bg-gray-800 text-white font-medium",
+                        inputWrapper: "bg-gray-800 hover:bg-gray-700 border-2 border-blue-500/50"
                       }}
                       disabled={isLoading}
                       size="lg"
@@ -318,7 +331,7 @@ export default function HomePage() {
                       color="primary"
                       isLoading={isLoading}
                       size="lg"
-                      className="min-w-[60px] md:min-w-[80px]"
+                      className="min-w-[60px] md:min-w-[80px] bg-blue-600 hover:bg-blue-500 font-semibold text-white shadow-lg"
                     >
                       发送
                     </Button>

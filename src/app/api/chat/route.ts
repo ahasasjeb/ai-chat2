@@ -4,10 +4,10 @@ const openai = new OpenAI({
 });
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const { messages, model } = await req.json();
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: model,
     messages,
     temperature: 0.7,
     max_tokens: 1000,
