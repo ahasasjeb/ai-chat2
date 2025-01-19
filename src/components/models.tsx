@@ -21,10 +21,10 @@ export default function ModelSelector({ value, onChange, disabled }: ModelSelect
       onChange={(e) => onChange(e.target.value as ModelType)}
       disabled={disabled}
       classNames={{
-        base: "max-w-[150px]", // 减小宽度
+        base: "max-w-[150px]",
         trigger: "bg-blue-600 hover:bg-blue-500 border-2 border-blue-400",
-        value: "text-white font-semibold text-sm", // 减小字体
-        label: "text-blue-100 font-medium text-xs", // 减小标签字体
+        value: "text-white font-semibold text-sm",
+        label: "text-blue-100 font-medium text-xs",
         listbox: "bg-blue-600 border-2 border-blue-400",
       }}
     >
