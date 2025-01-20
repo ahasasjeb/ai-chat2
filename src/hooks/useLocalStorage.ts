@@ -37,5 +37,33 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     }
   }, [token]);
 
+  useEffect(() => {
+    if (token && key === 'chats') {
+      // Sync with server
+      fetch('/api/chats', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => setStoredValue(data))
+      .catch(console.error);
+    }
+  }, [token, key]);
+
+  useEffect(() => {
+    if (token && key === 'chats') {
+      // Save to server
+      fetch('/api/chats', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ chats: storedValue })
+      }).catch(console.error);
+    }
+  }, [token, key, storedValue]);
+
   return [storedValue, setStoredValue] as const;
 }
