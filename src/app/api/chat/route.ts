@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const { messages, model, chatId } = await req.json();
 
     // Store message in database
-    const pool = MySql.getInstance();
+    const pool = await MySql.getInstance();
     await pool.query(
       'INSERT INTO messages (id, chat_id, role, content, created_at, user_id) VALUES (?, ?, ?, ?, ?, ?)',
       [Date.now().toString(), chatId, messages[messages.length - 1].role, messages[messages.length - 1].content, Date.now(), userId]
