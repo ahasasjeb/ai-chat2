@@ -10,8 +10,13 @@ import type { ChatMessage, Chat } from '@/types/ai';
 import ChatList from './ChatList';
 import { StarfieldCanvas } from './start';
 import ModelSelector, { ModelType } from './models';
+import { useAuth } from '@/hooks/useAuth';
+import LoginModal from '@/components/LoginModal';  // 使用绝对导入路径
 
 export default function HomePage() {
+  const { user, login, logout } = useAuth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  
   const [mounted, setMounted] = useState(false);
   const [chats, setChats] = useLocalStorage<Chat[]>('chats', []);
   const [currentChatId, setCurrentChatId] = useLocalStorage<string | null>('current-chat-id', null);
@@ -194,6 +199,30 @@ export default function HomePage() {
     <div className="flex h-[100dvh] relative bg-black">
       <StarfieldCanvas />
       <div className="flex h-full w-full absolute" style={{ zIndex: 1 }}>
+        {/* 用户账户部分 */}
+        <div className="absolute top-4 right-4">
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-white">{user.email}</span>
+              <Button color="primary" onPress={logout}>登出</Button>
+            </div>
+          ) : (
+            <Button 
+              color="primary" 
+              onPress={() => setIsLoginModalOpen(true)}
+            >
+              登录
+            </Button>
+          )}
+        </div>
+
+        {/* 登录模态框 */}
+        <LoginModal 
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          onLogin={login}
+        />
+
         {/* 侧边栏容器 */}
         <div className="relative" style={{ zIndex: 50 }}>
           {/* 移动端菜单按钮移到这里 */}

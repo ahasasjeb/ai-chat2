@@ -1,9 +1,21 @@
 import OpenAI from 'openai';
+import { verifyToken } from '../user';
 
 const openai = new OpenAI({
 });
 
 export async function POST(req: Request) {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  try {
+    await verifyToken(authHeader.split(' ')[1]);
+  } catch {
+    return new Response('Invalid token', { status: 401 });
+  }
+
   const { messages } = await req.json();
 
   const response = await openai.chat.completions.create({
