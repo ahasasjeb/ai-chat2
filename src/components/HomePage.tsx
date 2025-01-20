@@ -12,10 +12,12 @@ import { StarfieldCanvas } from './start';
 import ModelSelector, { ModelType } from './models';
 import { useAuth } from '@/hooks/useAuth';
 import LoginModal from '@/components/LoginModal';  // 使用绝对导入路径
+import RegisterModal from './RegisterModal';
 
 export default function HomePage() {
   const { user, login, logout } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   
   const [mounted, setMounted] = useState(false);
   const [chats, setChats] = useLocalStorage<Chat[]>('chats', []);
@@ -195,6 +197,33 @@ export default function HomePage() {
     }
   };
 
+  const handleRegister = async (email: string, password: string, code: string) => {
+    try {
+      await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, code })
+      });
+      // 注册成功后自动登录
+      await login(email, password);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleSendCode = async (email: string) => {
+    const response = await fetch('/api/send-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || '发送验证码失败');
+    }
+  };
+
   return (
     <div className="flex h-[100dvh] relative bg-black">
       <StarfieldCanvas />
@@ -207,12 +236,21 @@ export default function HomePage() {
               <Button color="primary" onPress={logout}>登出</Button>
             </div>
           ) : (
-            <Button 
-              color="primary" 
-              onPress={() => setIsLoginModalOpen(true)}
-            >
-              登录
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                color="primary" 
+                variant="ghost"
+                onPress={() => setIsRegisterModalOpen(true)}
+              >
+                注册
+              </Button>
+              <Button 
+                color="primary" 
+                onPress={() => setIsLoginModalOpen(true)}
+              >
+                登录
+              </Button>
+            </div>
           )}
         </div>
 
@@ -221,6 +259,14 @@ export default function HomePage() {
           isOpen={isLoginModalOpen}
           onClose={() => setIsLoginModalOpen(false)}
           onLogin={login}
+        />
+
+        {/* 注册模态框 */}
+        <RegisterModal 
+          isOpen={isRegisterModalOpen}
+          onClose={() => setIsRegisterModalOpen(false)}
+          onRegister={handleRegister}
+          onSendCode={handleSendCode}
         />
 
         {/* 侧边栏容器 */}
