@@ -23,15 +23,22 @@ export class MySql {
     if (!MySql.instance) {
       MySql.isInitializing = true;
       try {
-        const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME } = process.env;
+        const { DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT } = process.env;
         
         if (!DB_HOST || !DB_USER || !DB_PASSWORD || !DB_NAME) {
           throw new Error('数据库配置缺失');
         }
 
-        console.log('正在创建数据库连接池...');
+        console.log('正在创建数据库连接池...配置信息:', {
+          host: DB_HOST,
+          port: DB_PORT || 3306,
+          database: DB_NAME,
+          user: DB_USER,
+        });
+
         MySql.instance = mysql.createPool({
           host: DB_HOST,
+          port: parseInt(DB_PORT || '3306', 10),
           user: DB_USER,
           password: DB_PASSWORD,
           database: DB_NAME,
