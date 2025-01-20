@@ -4,7 +4,19 @@ import { isValidEmail } from '@/utils/emailValidator';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, code } = await request.json();
+    // 确保请求体是有效的JSON
+    if (!request.body) {
+      return NextResponse.json({ error: '无效的请求体' }, { status: 400 });
+    }
+
+    const body = await request.json();
+    
+    // 验证必需字段
+    if (!body.email || !body.password || !body.code) {
+      return NextResponse.json({ error: '缺少必需字段' }, { status: 400 });
+    }
+
+    const { email, password, code } = body;
 
     if (!isValidEmail(email)) {
       return NextResponse.json(
@@ -15,10 +27,18 @@ export async function POST(request: NextRequest) {
 
     await registerUser(email, password, code);
     
-    return NextResponse.json({ message: '注册成功' });
+    return NextResponse.json({ 
+      success: true,
+      message: '注册成功' 
+    });
+    
   } catch (error) {
+    console.error('Registration error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '注册失败' },
+      { 
+        success: false,
+        error: error instanceof Error ? error.message : '注册失败'
+      },
       { status: 500 }
     );
   }

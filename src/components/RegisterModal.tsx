@@ -69,9 +69,32 @@ export default function RegisterModal({ isOpen, onClose, onRegister, onSendCode 
       }
 
       setIsLoading(true);
-      await onRegister(email, password, code);
-      onClose();
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          code,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || '注册失败');
+      }
+
+      if (data.success) {
+        onClose();
+        await onRegister(email, password, code);
+      } else {
+        throw new Error(data.error || '注册失败');
+      }
     } catch (err) {
+      console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : '注册失败');
     } finally {
       setIsLoading(false);
