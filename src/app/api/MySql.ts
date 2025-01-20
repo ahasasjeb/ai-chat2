@@ -2,6 +2,8 @@ import mysql from 'mysql2/promise';
 
 export class MySql {
   private static instance: mysql.Pool | null = null;
+  private static retryCount = 3;
+  private static retryDelay = 1000; // 1秒
 
   public static async getInstance(): Promise<mysql.Pool> {
     if (!MySql.instance) {
@@ -11,27 +13,34 @@ export class MySql {
         throw new Error('数据库配置缺失');
       }
 
-      try {
-        MySql.instance = mysql.createPool({
-          host: DB_HOST,
-          user: DB_USER,
-          password: DB_PASSWORD,
-          database: DB_NAME,
-          waitForConnections: true,
-          connectionLimit: 10,
-          queueLimit: 0
-        });
+      for (let i = 0; i < MySql.retryCount; i++) {
+        try {
+          MySql.instance = mysql.createPool({
+            host: DB_HOST,
+            user: DB_USER,
+            password: DB_PASSWORD,
+            database: DB_NAME,
+            waitForConnections: true,
+            connectionLimit: 10,
+            queueLimit: 0,
+            connectTimeout: 10000, // 增加连接超时时间
+          });
 
-        // 测试连接
-        const connection = await MySql.instance.getConnection();
-        console.log('数据库连接成功');
-        connection.release();
-      } catch (error) {
-        console.error('数据库连接失败:', error);
-        throw new Error('数据库连接失败');
+          // 测试连接
+          const connection = await MySql.instance.getConnection();
+          console.log('数据库连接成功');
+          connection.release();
+          break;
+        } catch (error) {
+          console.error(`第 ${i + 1} 次连接失败:`, error);
+          if (i === MySql.retryCount - 1) {
+            throw new Error('数据库连接失败，已重试' + MySql.retryCount + '次');
+          }
+          await new Promise(resolve => setTimeout(resolve, MySql.retryDelay));
+        }
       }
     }
-    return MySql.instance;
+    return MySql.instance!;
   }
 }
 
