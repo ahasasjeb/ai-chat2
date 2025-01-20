@@ -11,16 +11,20 @@ export async function POST(req: Request) {
     return new Response('Unauthorized', { status: 401 });
   }
 
+  let pool = null;
   try {
     const { userId } = await verifyToken(authHeader.split(' ')[1]);
     const { messages, model, chatId } = await req.json();
 
-    // Store message in database
-    const pool = await MySql.getInstance();
-    await pool.query(
+    // 获取连接池并尝试存储消息
+    pool = await MySql.getInstance();
+    console.log('开始存储消息...');
+    
+    await pool.execute(
       'INSERT INTO messages (id, chat_id, role, content, created_at, user_id) VALUES (?, ?, ?, ?, ?, ?)',
       [Date.now().toString(), chatId, messages[messages.length - 1].role, messages[messages.length - 1].content, Date.now(), userId]
     );
+    console.log('消息存储成功');
 
     const response = await openai.chat.completions.create({
       model: model,
@@ -56,6 +60,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (err: unknown) {
+    console.error('操作失败:', err);
     const errorMessage = err instanceof Error ? err.message : '未知错误';
     return new Response('Error: ' + errorMessage, { status: 500 });
   }
