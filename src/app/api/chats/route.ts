@@ -1,16 +1,27 @@
-import { NextResponse } from 'next/server';
-import { verifyToken } from '../user';
+import { NextRequest, NextResponse } from 'next/server';
 import { MySql } from '../MySql';
-import { RowDataPacket } from 'mysql2';
+import { verifyToken } from '../user';
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
 
-interface ChatRow extends RowDataPacket {
+interface Chat {
+  id: string;
+  title: string;
+  messages: Array<{
+    id: string;
+    role: string;
+    content: string;
+  }>;
+  createdAt: number;
+}
+
+interface DbChat extends RowDataPacket {
   id: string;
   user_id: number;
   title: string;
   created_at: number;
 }
 
-interface MessageRow extends RowDataPacket {
+interface DbMessage extends RowDataPacket {
   id: string;
   chat_id: string;
   role: string;
@@ -18,79 +29,88 @@ interface MessageRow extends RowDataPacket {
   created_at: number;
 }
 
-export async function GET(req: Request) {
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-
+export async function GET(request: NextRequest) {
   try {
-    const { userId } = await verifyToken(authHeader.split(' ')[1]);
-    const pool = MySql.getInstance();
-    
-    // 获取用户的所有聊天记录
-    const [chats] = await pool.query<ChatRow[]>(
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    if (!token) {
+      return NextResponse.json({ error: '未授权' }, { status: 401 });
+    }
+
+    const { userId } = await verifyToken(token);
+    const pool = await MySql.getInstance();
+
+    // 获取所有聊天
+    const [chatRows] = await pool.query<DbChat[]>(
       'SELECT * FROM chats WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
 
     // 获取每个聊天的消息
-    const formattedChats = await Promise.all(
-      chats.map(async (chat) => {
-        const [messages] = await pool.query<MessageRow[]>(
-          'SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at ASC',
-          [chat.id]
-        );
-        return {
-          ...chat,
-          messages: messages
-        };
-      })
-    );
+    const chatsWithMessages = await Promise.all(chatRows.map(async (chat) => {
+      const [messageRows] = await pool.query<DbMessage[]>(
+        'SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at ASC',
+        [chat.id]
+      );
 
-    return NextResponse.json(formattedChats);
+      return {
+        id: chat.id,
+        title: chat.title,
+        createdAt: chat.created_at,
+        messages: messageRows.map(msg => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content
+        }))
+      };
+    }));
+
+    return NextResponse.json({ chats: chatsWithMessages });
+
   } catch (error) {
-    console.error('Error fetching chats:', error);
-    return new Response('Error fetching chats', { status: 500 });
+    console.error('获取聊天记录失败:', error);
+    return NextResponse.json(
+      { error: '获取聊天记录失败' },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(req: Request) {
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-
+export async function POST(request: NextRequest) {
   try {
-    const { userId } = await verifyToken(authHeader.split(' ')[1]);
-    const { chats } = await req.json();
-    const pool = MySql.getInstance();
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    if (!token) {
+      return NextResponse.json({ error: '未授权' }, { status: 401 });
+    }
 
-    // 删除用户所有现有聊天
-    await pool.query('DELETE FROM chats WHERE user_id = ?', [userId]);
+    const { userId } = await verifyToken(token);
+    const body = await request.json();
+    const chat: Chat = body.chat;
 
-    // 插入新的聊天记录
-    for (const chat of chats) {
-      const { id, title, messages, createdAt } = chat;
-      
-      // 插入聊天
-      await pool.query(
-        'INSERT INTO chats (id, user_id, title, created_at) VALUES (?, ?, ?, ?)',
-        [id, userId, title, createdAt]
-      );
+    const pool = await MySql.getInstance();
 
-      // 插入消息
-      for (const msg of messages) {
-        await pool.query(
+    // 创建新聊天
+    await pool.query<ResultSetHeader>(
+      'INSERT INTO chats (id, user_id, title, created_at) VALUES (?, ?, ?, ?)',
+      [chat.id, userId, chat.title, chat.createdAt]
+    );
+
+    // 插入消息
+    if (chat.messages.length > 0) {
+      await Promise.all(chat.messages.map(msg =>
+        pool.query<ResultSetHeader>(
           'INSERT INTO messages (id, chat_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)',
-          [msg.id, id, msg.role, msg.content, msg.createdAt || Date.now()]
-        );
-      }
+          [msg.id, chat.id, msg.role, msg.content, Date.now()]
+        )
+      ));
     }
 
     return NextResponse.json({ success: true });
+
   } catch (error) {
-    console.error('Error syncing chats:', error);
-    return new Response('Error syncing chats', { status: 500 });
+    console.error('保存聊天记录失败:', error);
+    return NextResponse.json(
+      { error: '保存聊天记录失败' },
+      { status: 500 }
+    );
   }
 }

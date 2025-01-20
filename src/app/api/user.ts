@@ -55,23 +55,35 @@ export async function verifyCode(email: string, code: string): Promise<boolean> 
 }
 
 export async function registerUser(email: string, password: string, code: string) {
-  const pool = MySql.getInstance();
-  
-  if (!await verifyCode(email, code)) {
-    throw new Error('验证码无效或已过期');
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  
   try {
+    if (!await verifyCode(email, code)) {
+      throw new Error('验证码无效或已过期');
+    }
+
+    const pool = await MySql.getInstance();
+    
+    const [existingUsers] = await pool.query<RowDataPacket[]>(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existingUsers.length > 0) {
+      throw new Error('该邮箱已被注册');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
     await pool.query(
       'INSERT INTO users (email, password) VALUES (?, ?)',
       [email, hashedPassword]
     );
+    
+    console.log('用户注册成功:', email);
     verificationCodes.delete(email);
+    
   } catch (err) {
-    console.error('Registration error:', err);
-    throw new Error('注册失败');
+    console.error('注册过程出错:', err);
+    throw err instanceof Error ? err : new Error('注册失败');
   }
 }
 
@@ -82,7 +94,7 @@ interface UserRow extends RowDataPacket {
 }
 
 export async function loginUser(email: string, password: string) {
-  const pool = MySql.getInstance();
+  const pool = await MySql.getInstance();
   
   const [rows] = await pool.query<UserRow[]>(
     'SELECT * FROM users WHERE email = ?',
