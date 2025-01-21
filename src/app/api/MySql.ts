@@ -34,6 +34,8 @@ export class MySql {
           port: DB_PORT || 3306,
           database: DB_NAME,
           user: DB_USER,
+          // 添加连接来源信息用于调试
+          connectionOrigin: 'Vercel Serverless Function'
         });
 
         MySql.instance = mysql.createPool({
@@ -45,18 +47,33 @@ export class MySql {
           waitForConnections: true,
           connectionLimit: 10,
           queueLimit: 0,
-          connectTimeout: 10000,
-          // 添加额外的连接配置
+          connectTimeout: 60000, // 增加超时时间到60秒
           enableKeepAlive: true,
-          keepAliveInitialDelay: 0,
+          keepAliveInitialDelay: 10000,
+          ssl: {
+            rejectUnauthorized: false // 如果使用SSL连接但证书有问题，可以尝试此选项
+          }
+        });
+
+        // 添加连接错误监听
+        MySql.instance.on('connection', (connection) => {
+          console.log('新的数据库连接已建立');
+          connection.on('error', (err) => {
+            console.error('数据库连接错误:', err);
+          });
         });
 
         // 验证连接池
         await MySql.validatePool(MySql.instance);
         console.log('数据库连接池创建成功');
       } catch (error) {
+        const mysqlError = error as MySqlError;
+        console.error('数据库连接池创建失败:', {
+          message: mysqlError.message,
+          code: mysqlError.code,
+          state: mysqlError.sqlState
+        });
         MySql.instance = null;
-        console.error('数据库连接池创建失败:', error);
         throw error;
       } finally {
         MySql.isInitializing = false;
