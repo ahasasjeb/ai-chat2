@@ -3,10 +3,16 @@ import type { NextRequest } from 'next/server';
 import { verifyToken } from './app/api/user';
 
 export async function middleware(request: NextRequest) {
-  // 需要保护的路由
-  const protectedPaths = ['/api/chat', '/api/generate-title'];
-  
   const path = request.nextUrl.pathname;
+  
+  // 排除登录和注册相关的路由
+  const publicPaths = ['/api/login', '/api/register', '/api/send-code'];
+  if (publicPaths.includes(path)) {
+    return NextResponse.next();
+  }
+
+  // 只保护特定的API路由
+  const protectedPaths = ['/api/chat', '/api/generate-title'];
   if (!protectedPaths.includes(path)) {
     return NextResponse.next();
   }
@@ -32,5 +38,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    '/api/chat',
+    '/api/generate-title'
+  ]
 }

@@ -45,13 +45,13 @@ export class MySql {
           password: DB_PASSWORD,
           database: DB_NAME,
           waitForConnections: true,
-          connectionLimit: 10,
-          queueLimit: 0,
+          connectionLimit: 1,
+          maxIdle: 1,
           connectTimeout: 60000, // 增加超时时间到60秒
-          enableKeepAlive: true,
+          enableKeepAlive: false,
           keepAliveInitialDelay: 10000,
           ssl: {
-            rejectUnauthorized: false // 如果使用SSL连接但证书有问题，可以尝试此选项
+            rejectUnauthorized: true // 如果使用SSL连接但证书有问题，可以尝试此选项
           }
         });
 
